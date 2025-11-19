@@ -11,12 +11,31 @@ from aaf.abstracts import (
     AbstractMiddleware,
     AbstractService,
     AbstractState,
+    AbstractMemory,
+    AbstractPlanner,
+    AbstractReasoner,
+    MemoryEntry,
 )
 from aaf.framework import AgenticFrameworkX
 from aaf.state import InMemoryStateManager, FileStateManager
 from aaf.retry import RetryPolicy, RetryMiddleware, with_retry
 from aaf.registry import AgentRegistry, AgentInfo
 from aaf.structured_logging import StructuredLogger, LoggingContext
+from aaf.memory import InMemoryShortTermMemory, SimpleLongTermMemory
+from aaf.planning import SimpleTaskPlanner, ReActReasoner
+from aaf.collaboration import (
+    HierarchicalPattern,
+    SequentialPattern,
+    SwarmPattern,
+    RoundRobinPattern,
+)
+from aaf.human_loop import (
+    ApprovalWorkflow,
+    ApprovalStatus,
+    InterventionPoint,
+    HumanFeedbackLoop,
+    GuardrailValidator,
+)
 
 __all__ = [
     "AbstractAgent",
@@ -24,6 +43,10 @@ __all__ = [
     "AbstractMiddleware",
     "AbstractService",
     "AbstractState",
+    "AbstractMemory",
+    "AbstractPlanner",
+    "AbstractReasoner",
+    "MemoryEntry",
     "AgenticFrameworkX",
     "InMemoryStateManager",
     "FileStateManager",
@@ -34,4 +57,17 @@ __all__ = [
     "AgentInfo",
     "StructuredLogger",
     "LoggingContext",
+    "InMemoryShortTermMemory",
+    "SimpleLongTermMemory",
+    "SimpleTaskPlanner",
+    "ReActReasoner",
+    "HierarchicalPattern",
+    "SequentialPattern",
+    "SwarmPattern",
+    "RoundRobinPattern",
+    "ApprovalWorkflow",
+    "ApprovalStatus",
+    "InterventionPoint",
+    "HumanFeedbackLoop",
+    "GuardrailValidator",
 ]
