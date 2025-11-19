@@ -48,6 +48,12 @@ This design separates authentication concerns from business logic, making securi
 
 **AbstractWorkflowOrchestrator**: Coordinates service execution flow, applying middleware and managing state transitions.
 
+**AbstractStateManager**: Protocol for persisting and retrieving agent state. Enables agents to maintain state across executions and recover from failures.
+
+**AbstractRetryPolicy**: Protocol for defining retry behavior when service calls fail. Supports configurable retry strategies with exponential backoff.
+
+**AbstractAgentRegistry**: Protocol for centralized agent lifecycle management, including registration, lookup, and shutdown coordination.
+
 ### Service Integration Architecture
 
 **MCP Tool Integration**: The `MCPToolService` wraps MCP (Model Context Protocol) tool clients, translating between the framework's state model and MCP's tool invocation model. Supports authenticated and unauthenticated tool calls.
@@ -60,16 +66,57 @@ Both service types follow a common pattern:
 3. Execute protocol-specific client call
 4. Package response back into state
 
+### Production-Ready Abstractions
+
+**State Management**: The framework includes `InMemoryStateManager` for ephemeral state and `FileStateManager` for persistent JSON-based state storage. State managers handle:
+- Agent state persistence across executions
+- Atomic save/load operations
+- State lifecycle management (list, delete, clear)
+- Metadata tracking (timestamps, versions)
+
+**Retry Logic**: The `RetryPolicy` abstraction enables configurable retry behavior for transient failures:
+- Exponential backoff with jitter
+- Configurable max retries and delays
+- Exception-specific retry rules
+- `RetryMiddleware` integrates retry logic into the middleware pipeline
+- `@with_retry` decorator for function-level retry support
+
+**Agent Registry**: The `AgentRegistry` provides centralized agent lifecycle management:
+- Agent registration with metadata
+- Duplicate prevention with optional replacement
+- Agent lookup and information retrieval
+- Coordinated shutdown of all registered agents
+- Execution statistics tracking
+
+**Structured Logging**: The `StructuredLogger` enhances observability with:
+- Context-aware logging with correlation IDs
+- Structured data attachment to log entries
+- Automatic context enrichment (timestamp, level, module)
+- Integration with standard Python logging
+
 ## REST API Service
 
 **FastAPI Integration**: The framework is exposed as a REST API service (`api.py`) that runs on port 5000. This allows agents to be created and executed via HTTP requests, making the framework accessible to any client that can make HTTP calls.
 
 ### API Endpoints
 
+#### Core Execution
 **GET /health**: Health check endpoint that returns service status
 **POST /agent/execute**: Execute an agent with custom configuration, services, and security settings
 **POST /demo/scenario1**: Run demo scenario 1 (secure MCP tool execution with authentication)
 **POST /demo/scenario2**: Run demo scenario 2 (A2A delegation failure without authentication)
+
+#### State Management
+**GET /state/agents**: List all agents with stored state
+**POST /state/{agent_id}**: Save agent state
+**GET /state/{agent_id}**: Load agent state
+**DELETE /state/{agent_id}**: Delete agent state
+
+#### Agent Registry
+**GET /registry/agents**: List all registered agents
+**GET /registry/{agent_id}**: Get information about a registered agent
+**GET /registry**: Get information about all registered agents
+**DELETE /registry/{agent_id}**: Unregister an agent from the registry
 
 ### Interactive Documentation
 
@@ -106,7 +153,7 @@ All API endpoints use Pydantic models for request validation and response serial
 
 ### Design Considerations
 
-**No Database**: The framework is stateless and doesn't require persistent storage. All state is ephemeral and flows through the execution pipeline.
+**Optional State Persistence**: The framework supports both stateless (in-memory) and stateful (file-based) execution modes. Agents can persist state across executions using the state manager abstraction.
 
 **No External APIs**: Current implementation uses dummy clients for demonstration. Production deployments would replace these with real MCP/A2A client implementations that communicate with external services.
 
