@@ -18,6 +18,14 @@ from aaf.abstracts import (
 )
 # Old framework import removed (now using decorator-based approach)
 from aaf.state import InMemoryStateManager, FileStateManager
+
+# Pluggable state backends (Redis, PostgreSQL, etc.)
+from aaf.state_backends import (
+    StateBackend,
+    RedisStateBackend,
+    PostgresStateBackend,
+    WorkflowStateManager,
+)
 from aaf.retry import RetryPolicy, RetryMiddleware, with_retry
 from aaf.registry import AgentRegistry, AgentInfo
 from aaf.structured_logging import StructuredLogger, LoggingContext

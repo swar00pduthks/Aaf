@@ -1,4 +1,4 @@
-modules = ["python-3.12"]
+modules = ["python-3.12", "postgresql-16"]
 [agent]
 expertMode = true
 integrations = ["github:1.0.0"]
@@ -34,10 +34,6 @@ packages = ["libxcrypt"]
 [[ports]]
 localPort = 5000
 externalPort = 80
-
-[[ports]]
-localPort = 33285
-externalPort = 3001
 
 [[ports]]
 localPort = 33511

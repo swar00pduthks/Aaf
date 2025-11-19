@@ -118,6 +118,37 @@ The `EnhancedAgent` (using Pydantic AI-like features) offers type-safe agents wi
 
 A high-level `simplified_api.py` facade hides protocol complexity for rapid prototyping, offering functions like `create_agent()`, `create_memory()`, `create_team()`, and `create_planner()`.
 
+## State Management
+
+AAF provides **pluggable state backends** for workflow persistence:
+
+### Built-in Backends
+- **InMemoryStateManager**: Fast, transient (dev/testing)
+- **FileStateManager**: File-based persistence
+- **RedisStateBackend**: Fast caching, distributed, TTL support
+- **PostgresStateBackend**: Persistent, reliable, queryable (works with Replit database)
+
+### Usage
+```python
+from aaf.state_backends import PostgresStateBackend, WorkflowStateManager
+import psycopg2
+import os
+
+# Use Replit's database
+conn = psycopg2.connect(os.environ['DATABASE_URL'])
+backend = PostgresStateBackend(conn)
+state_mgr = WorkflowStateManager(backend)
+
+# Save workflow state
+state_mgr.save_workflow_state("workflow_123", {"step": 1}, ttl=3600)
+
+# Load state
+state = state_mgr.load_workflow_state("workflow_123")
+```
+
+### Custom Backends
+Implement `StateBackend` interface for any database (MongoDB, DynamoDB, etc.)
+
 ## External Dependencies
 
 *   **MCP (Model Context Protocol)**: External protocol for tool invocation, with `DummyMCPClient` for simulation.
@@ -127,3 +158,5 @@ A high-level `simplified_api.py` facade hides protocol complexity for rapid prot
 *   **Pydantic**: Data validation and settings management library.
 *   **LangGraph**: Used as a base for orchestration, with `LangGraphAdapter` integrating its capabilities.
 *   **Logging**: Standard Python `logging` module for observability.
+*   **Redis** (optional): For RedisStateBackend caching.
+*   **psycopg2** (optional): For PostgresStateBackend persistence.
