@@ -56,6 +56,20 @@ from aaf.decorators import (
     list_agents,
 )
 
+# Feature decorators (validators, HITL, memory, retry, etc.)
+from aaf.feature_decorators import (
+    validate,
+    guardrail,
+    no_bulk_operations,
+    requires_approval,
+    human_feedback,
+    with_memory,
+    retry,
+    plan_task,
+    log_execution,
+    stack,
+)
+
 # Enhanced type-safe agents (optional - for Pydantic AI-like features)
 from aaf.enhanced_agent import EnhancedAgent
 from aaf.models import (
@@ -123,6 +137,16 @@ __all__ = [
     "workflow",
     "get_agent",
     "list_agents",
+    "validate",
+    "guardrail",
+    "no_bulk_operations",
+    "requires_approval",
+    "human_feedback",
+    "with_memory",
+    "retry",
+    "plan_task",
+    "log_execution",
+    "stack",
     "EnhancedAgent",
     "AgentRequest",
     "AgentResponse",

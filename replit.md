@@ -8,6 +8,22 @@ The Agentic Application Framework (AAF) is a pluggable framework for building ag
 
 Preferred communication style: Simple, everyday language.
 
+## AAF's Unique Value Proposition
+
+**Decorator Philosophy**: Lambda-like simplicity for everything - agent creation, orchestration, validation, HITL, memory, retry, planning - all as simple decorators.
+
+**Core Features**:
+- `@agent` - Turn any function into an agent
+- `@workflow` - Auto-orchestrate multiple agents
+- `@validate`, `@guardrail` - Add safety rules
+- `@requires_approval`, `@human_feedback` - Add human oversight
+- `@with_memory` - Add context retention
+- `@retry` - Add fault tolerance
+- `@plan_task` - Add task planning
+- `@stack` - Compose all features
+
+**Target Users**: Teams using multiple frameworks (LangGraph + CrewAI + Microsoft) who want zero-boilerplate orchestration
+
 ## System Architecture
 
 ### Core Design Patterns

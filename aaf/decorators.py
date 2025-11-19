@@ -91,6 +91,10 @@ def _create_agent(func: Callable, agent_id: Optional[str], framework: Optional[s
             """Allow calling the original function directly."""
             return self._func(*args, **kwargs)
         
+        @property
+        def __name__(self):
+            return self._id
+        
         def __repr__(self):
             return f"<Agent '{self._id}' framework={self._framework or 'custom'}>"
     
