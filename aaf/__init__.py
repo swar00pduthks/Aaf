@@ -26,6 +26,19 @@ from aaf.state_backends import (
     PostgresStateBackend,
     WorkflowStateManager,
 )
+
+# UI/Theming - CopilotKit integration and embeddable widgets
+from aaf.agui_adapter import (
+    AAFAGUIAdapter,
+    create_agui_fastapi_endpoint,
+)
+from aaf.ui_themes import (
+    AAFTheme,
+    THEMES,
+    get_theme,
+    generate_theme_css,
+    generate_html_embed,
+)
 from aaf.retry import RetryPolicy, RetryMiddleware, with_retry
 from aaf.registry import AgentRegistry, AgentInfo
 from aaf.structured_logging import StructuredLogger, LoggingContext

@@ -149,6 +149,63 @@ state = state_mgr.load_workflow_state("workflow_123")
 ### Custom Backends
 Implement `StateBackend` interface for any database (MongoDB, DynamoDB, etc.)
 
+## UI & Theming Integration
+
+AAF provides **embeddable UI** with **customizable themes** via **CopilotKit integration**:
+
+### CopilotKit (AG-UI Protocol) - Experimental
+AAF includes experimental support for CopilotKit's AG-UI protocol.
+Note: Real-time event streaming requires workflow callback hooks (planned for future release).
+
+AAF workflows can be embedded in React apps using CopilotKit's beautiful UI components:
+
+```tsx
+import { CopilotKit } from '@copilotkit/react-core';
+import { CopilotSidebar } from '@copilotkit/react-ui';
+
+<CopilotKit runtimeUrl="/api/copilotkit" agent="aaf_agent">
+  <YourApp />
+  <CopilotSidebar defaultOpen={true} />
+</CopilotKit>
+```
+
+### Built-in Themes
+- **Default**: Professional, general purpose
+- **Dark**: Night mode, developer tools
+- **Ocean**: Analytics dashboards
+- **Forest**: Health, sustainability
+- **Sunset**: Creative, energetic
+- **Minimal**: Clean, distraction-free
+
+### Custom Themes
+```python
+from aaf.ui_themes import AAFTheme, generate_theme_css
+
+# Create custom theme
+my_theme = AAFTheme(
+    name="MyBrand",
+    primary_color="#ff6b6b",
+    secondary_color="#4ecdc4"
+)
+
+# Generate CSS
+css = generate_theme_css(my_theme.name)
+```
+
+### Embeddable Widgets
+Generate standalone HTML widgets that can be iframe'd into any application:
+
+```python
+from aaf.ui_themes import generate_html_embed
+
+html = generate_html_embed(
+    theme_name="dark",
+    title="AI Assistant",
+    height="600px"
+)
+# Save to file or serve via endpoint
+```
+
 ## External Dependencies
 
 *   **MCP (Model Context Protocol)**: External protocol for tool invocation, with `DummyMCPClient` for simulation.
