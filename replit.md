@@ -60,6 +60,30 @@ Both service types follow a common pattern:
 3. Execute protocol-specific client call
 4. Package response back into state
 
+## REST API Service
+
+**FastAPI Integration**: The framework is exposed as a REST API service (`api.py`) that runs on port 5000. This allows agents to be created and executed via HTTP requests, making the framework accessible to any client that can make HTTP calls.
+
+### API Endpoints
+
+**GET /health**: Health check endpoint that returns service status
+**POST /agent/execute**: Execute an agent with custom configuration, services, and security settings
+**POST /demo/scenario1**: Run demo scenario 1 (secure MCP tool execution with authentication)
+**POST /demo/scenario2**: Run demo scenario 2 (A2A delegation failure without authentication)
+
+### Interactive Documentation
+
+The FastAPI service provides built-in interactive documentation via:
+- **Swagger UI**: Available at `http://localhost:5000/docs` - Interactive API explorer with request/response examples
+- **ReDoc**: Available at `http://localhost:5000/redoc` - Alternative API documentation interface
+
+### Request/Response Models
+
+All API endpoints use Pydantic models for request validation and response serialization:
+- `AgentExecutionRequest`: Defines agent configuration, services, security settings, and request payload
+- `AgentExecutionResponse`: Returns execution results, metadata, or error information
+- `ServiceConfig`: Configures individual services (MCP tools, A2A clients)
+
 ## External Dependencies
 
 ### Protocol Implementations
@@ -69,6 +93,12 @@ Both service types follow a common pattern:
 **A2A (Agent-to-Agent Protocol)**: Protocol for inter-agent communication. The framework includes `DummyA2AClient` to demonstrate agent delegation patterns with authentication requirements.
 
 ### Framework Dependencies
+
+**FastAPI**: Production-ready web framework for building REST APIs with automatic OpenAPI/Swagger documentation, request validation via Pydantic, and async support.
+
+**Uvicorn**: ASGI server for serving the FastAPI application with auto-reload during development.
+
+**Pydantic**: Data validation library used for API request/response models and type safety.
 
 **LangGraph**: The framework is designed to integrate with LangGraph for advanced state graph orchestration. The current `LangGraphAdapter` provides a simplified linear execution model, but the architecture supports full LangGraph capabilities (conditional edges, parallel execution, state persistence).
 
