@@ -16,7 +16,7 @@ from aaf.abstracts import (
     AbstractReasoner,
     MemoryEntry,
 )
-from aaf.framework import AgenticFrameworkX
+# Old framework import removed (now using decorator-based approach)
 from aaf.state import InMemoryStateManager, FileStateManager
 from aaf.retry import RetryPolicy, RetryMiddleware, with_retry
 from aaf.registry import AgentRegistry, AgentInfo
@@ -56,10 +56,32 @@ from aaf.decorators import (
     list_agents,
 )
 
-# LLM provider decorators (AAF's own - no Pydantic AI dependency)
+# LLM decorators (AAF's own - no Pydantic AI dependency)
 from aaf.llm_decorators import (
-    llm_agent,
-    multi_provider_agent,
+    llm,  # Simple LLM call (not an agent)
+    multi_provider_agent,  # Multi-provider with fallback
+)
+
+# Workflow nodes and orchestration
+from aaf.workflow_nodes import (
+    node,
+    workflow_graph,
+    WorkflowNode,
+    WorkflowGraph,
+    get_node,
+    list_nodes,
+)
+
+# Tool decorators (MCP, A2A, custom)
+from aaf.tool_decorators import (
+    mcp_tool,
+    a2a_agent as a2a,  # Rename for clarity
+    custom_tool,
+)
+
+# Autonomous agent (real agent with tools, memory, planning)
+from aaf.autonomous_agent_decorator import (
+    autonomous_agent,
 )
 
 # Pydantic AI-powered decorators (optional - requires pydantic-ai)
@@ -123,7 +145,7 @@ __all__ = [
     "AbstractPlanner",
     "AbstractReasoner",
     "MemoryEntry",
-    "AgenticFrameworkX",
+    # "AgenticFrameworkX",  # Removed - old protocol-based approach
     "InMemoryStateManager",
     "FileStateManager",
     "RetryPolicy",
@@ -167,8 +189,14 @@ __all__ = [
     "plan_task",
     "log_execution",
     "stack",
-    "llm_agent",
+    "llm",
     "multi_provider_agent",
+    "node",
+    "workflow_graph",
+    "mcp_tool",
+    "a2a",
+    "custom_tool",
+    "autonomous_agent",
     "pydantic_agent",
     "chatbot",
     "from_pydantic_ai",

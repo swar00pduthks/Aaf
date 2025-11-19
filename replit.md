@@ -2,7 +2,18 @@
 
 ## Overview
 
-The Agentic Application Framework (AAF) is a pluggable framework for building agentic applications, emphasizing a modular architecture with middleware support, service abstractions, and workflow orchestration. It enables secure integration with external services (MCP tools, Agent-to-Agent communication) via a middleware-based request/response pipeline. The framework's core design uses protocol-oriented programming principles to define contracts between components, allowing for flexible implementations. AAF provides a decorator-based approach for common agentic features like agent creation, orchestration, validation, human-in-the-loop (HITL), memory, retry mechanisms, and planning, aiming to simplify complex multi-framework workflows.
+The Agentic Application Framework (AAF) is a decorator-based framework for building production-ready agentic applications. AAF distinguishes between **simple LLM calls** and **autonomous agents**, providing node-based workflow orchestration with conditional routing, MCP tool integration, and A2A protocol support. The framework emphasizes simplicity through decorators like `@node`, `@workflow_graph`, `@llm`, `@autonomous_agent`, `@mcp_tool`, and `@a2a`, enabling developers to build complex multi-agent workflows without boilerplate code.
+
+## Recent Changes (Nov 2024)
+
+**Major Architecture Shift: Decorator-Based Node Orchestration**
+- Replaced protocol-based architecture with decorator-first approach
+- Created `@node` decorator for workflow steps
+- Created `@workflow_graph` with conditional routing (if-then-else logic)
+- Renamed `@llm_agent` → `@llm` to clarify: simple LLM call ≠ autonomous agent
+- Created `@autonomous_agent` for real agents with tools, memory, planning
+- Created `@mcp_tool` and `@a2a` decorators for external integrations
+- Archived old protocol-based files (main.py → main_old_protocol.py.bak, framework.py → framework_old_protocol.py.bak)
 
 ## User Preferences
 
@@ -12,26 +23,79 @@ Preferred communication style: Simple, everyday language.
 
 ### Core Design Patterns
 
-The framework is built on **Protocol-Oriented Architecture** (Python Protocols) for defining interface contracts, allowing flexible and swappable implementations. A **Middleware Pipeline Pattern** enables intercepting and modifying service requests/responses for cross-cutting concerns like logging and authentication. The **State Container Pattern** centralizes execution context through an `AbstractState` TypedDict, ensuring explicit and traceable data flow. An **Adapter Pattern** is used for orchestration, with `LangGraphAdapter` providing a simplified workflow executor, abstracting complexity and allowing integration with various orchestration backends.
+**Decorator-First Architecture**: AAF uses decorators to compose functionality without boilerplate code. Decorators can be stacked (e.g., `@node @llm`, `@node @mcp_tool`) for powerful combinations.
+
+**Node-Based Workflow Orchestration**: Workflows are built as directed graphs of nodes, with conditional routing based on state. Similar to LangGraph but simpler and more Pythonic.
+
+**State Container Pattern**: Workflow state is a simple dictionary passed between nodes. Each node receives state, processes it, and returns updated state.
+
+**Clear Separation**: AAF distinguishes between:
+- **Simple LLM calls** (`@llm`) - one-shot LLM invocation
+- **Autonomous agents** (`@autonomous_agent`) - agents with tools, memory, planning, and autonomy
 
 ### Authentication & Security Architecture
 
 Security is managed via **Token Injection via Middleware**, where middleware injects authentication tokens from the state's `token_map` into service calls based on a `requires_token` property. A **Two-Tier Security Model** offers a "Secure Mode" (automated token management) and an "Insecure Mode" (manual or unauthenticated calls), separating authentication concerns from business logic.
 
-### Component Responsibilities
+### Core Decorators
 
-*   **AgenticFrameworkX (Facade)**: Factory for constructing agents with configured middleware and orchestrators.
-*   **AbstractAgent**: Represents an autonomous agent, managing identity, state, and service execution.
-*   **AbstractService**: Protocol for external integrations (MCP tools, A2A agents).
-*   **AbstractMiddleware**: Intercepts and processes state before/after service execution.
-*   **AbstractWorkflowOrchestrator**: Coordinates service execution flow and state transitions.
-*   **AbstractStateManager**: Protocol for persisting and retrieving agent state.
-*   **AbstractRetryPolicy**: Protocol for defining retry behavior.
-*   **AbstractAgentRegistry**: Protocol for centralized agent lifecycle management.
+*   **`@node`**: Mark a function as a workflow node (step in workflow graph)
+*   **`@workflow_graph`**: Orchestrate nodes with conditional routing and state management
+*   **`@llm`**: Simple LLM call (one-shot, no autonomy)
+*   **`@autonomous_agent`**: Real agent with tools, memory, planning, autonomy
+*   **`@mcp_tool`**: Integrate MCP (Model Context Protocol) tools
+*   **`@a2a`**: Agent-to-agent delegation via A2A protocol
+*   **`@custom_tool`**: Create custom tools for agents
+*   **`@validate`**, **`@guardrail`**, **`@requires_approval`**: Safety and validation
+*   **`@with_memory`**, **`@retry`**, **`@plan_task`**: Additional agent capabilities
+*   **`@stack`**: Compose multiple decorators into reusable stacks
 
-### Service Integration Architecture
+### Workflow Example: Chat Client
 
-**MCP Tool Integration** uses `MCPToolService` to wrap MCP tool clients, handling translation and authentication. **A2A Client Integration** uses `A2AClientService` for agent-to-agent delegation, requiring authentication. Both follow a pattern of parameter extraction, token retrieval, client execution, and response packaging.
+```python
+from aaf import node, workflow_graph, llm, mcp_tool, autonomous_agent
+
+# Step 1: Determine intent
+@node
+@llm(model="openai:gpt-4")
+def parse_intent(state):
+    return {"intent": "database"}  # or "tool" or "research"
+
+# Step 2a: Generate SQL
+@node
+@llm(model="openai:gpt-4")
+def generate_sql(state):
+    return {"sql": "SELECT * FROM users"}
+
+# Step 2b: Call MCP tool
+@node
+@mcp_tool("search")
+def search_web(state):
+    return {"results": [...]}
+
+# Step 2c: Autonomous agent
+@node
+@autonomous_agent(model="openai:gpt-4", tools=["search", "calculator"], memory=True)
+def research(state):
+    return {"findings": "..."}
+
+# Orchestrate with conditional routing
+@workflow_graph(
+    start="parse_intent",
+    routing={
+        "parse_intent": lambda s: {"database": "generate_sql", "tool": "search_web", "research": "research"}[s["intent"]],
+        "generate_sql": "END",
+        "search_web": "END",
+        "research": "END"
+    },
+    end="END"
+)
+def chat_workflow(user_query: str):
+    return {"user_query": user_query}
+
+# Use it
+result = chat_workflow("Show me users")
+```
 
 ### Production-Ready Abstractions
 

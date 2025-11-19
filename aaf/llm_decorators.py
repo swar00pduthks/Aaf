@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 T = TypeVar('T', bound=BaseModel)
 
 
-def llm_agent(
+def llm(
     model: str = "openai:gpt-4",
     result_type: Optional[Type[T]] = None,
     instructions: Optional[str] = None,
@@ -25,13 +25,15 @@ def llm_agent(
     api_key: Optional[str] = None
 ):
     """
-    Create an LLM-powered agent using AAF's llm_providers.py (no Pydantic AI dependency).
+    Simple LLM call decorator (NOT an autonomous agent - just calls LLM once).
+    
+    Use this for simple LLM calls in workflow nodes.
+    For autonomous agents with tools/memory/planning, use @autonomous_agent instead.
     
     This gives you:
     - Multi-provider support (OpenAI, Anthropic, Gemini, etc.)
     - Type-safe outputs with Pydantic models
     - Streaming support
-    - Tool registration
     - NO dependency on Pydantic AI library
     
     Example:
@@ -42,7 +44,7 @@ def llm_agent(
             findings: list[str]
             confidence: float
         
-        @llm_agent(
+        @llm(
             model="openai:gpt-4",
             result_type=ResearchOutput,
             instructions="You are a research assistant"
@@ -55,14 +57,14 @@ def llm_agent(
         print(result.summary)  # Type-safe access!
     
     Multi-Provider Examples:
-        @llm_agent(model="openai:gpt-4")
-        def openai_agent(query): return query
+        @llm(model="openai:gpt-4")
+        def openai_call(query): return query
         
-        @llm_agent(model="anthropic:claude-3-5-sonnet")
-        def claude_agent(query): return query
+        @llm(model="anthropic:claude-3-5-sonnet")
+        def claude_call(query): return query
         
-        @llm_agent(model="gemini:gemini-2.0-flash")
-        def gemini_agent(query): return query
+        @llm(model="gemini:gemini-2.0-flash")
+        def gemini_call(query): return query
     """
     def decorator(func: Callable):
         # Create EnhancedAgent (uses llm_providers.py internally)
