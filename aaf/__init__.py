@@ -56,6 +56,20 @@ from aaf.decorators import (
     list_agents,
 )
 
+# Pydantic AI-powered decorators (optional - requires pydantic-ai)
+try:
+    from aaf.pydantic_decorators import (
+        pydantic_agent,
+        chatbot,
+        from_pydantic_ai,
+    )
+    PYDANTIC_AI_INTEGRATION = True
+except ImportError:
+    PYDANTIC_AI_INTEGRATION = False
+    pydantic_agent = None
+    chatbot = None
+    from_pydantic_ai = None
+
 # Feature decorators (validators, HITL, memory, retry, etc.)
 from aaf.feature_decorators import (
     validate,
@@ -147,6 +161,9 @@ __all__ = [
     "plan_task",
     "log_execution",
     "stack",
+    "pydantic_agent",
+    "chatbot",
+    "from_pydantic_ai",
     "EnhancedAgent",
     "AgentRequest",
     "AgentResponse",
