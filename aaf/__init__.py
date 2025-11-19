@@ -37,6 +37,12 @@ from aaf.human_loop import (
     GuardrailValidator,
 )
 
+# Simplified API (optional - hides protocol complexity)
+try:
+    from aaf import simplified_api
+except ImportError:
+    simplified_api = None
+
 __all__ = [
     "AbstractAgent",
     "AbstractWorkflowOrchestrator",
