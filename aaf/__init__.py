@@ -45,6 +45,23 @@ from aaf.adapters import (
     AutoGenAdapter,
 )
 
+# Enhanced type-safe agents (Pydantic AI-like features)
+from aaf.enhanced_agent import EnhancedAgent
+from aaf.models import (
+    AgentRequest,
+    AgentResponse,
+    AgentMetadata,
+    MemoryEntry,
+    PlanStep,
+)
+from aaf.llm_providers import (
+    BaseLLMProvider,
+    OpenAIProvider,
+    AnthropicProvider,
+    GeminiProvider,
+    infer_provider,
+)
+
 # Simplified API (optional - hides protocol complexity)
 try:
     from aaf import simplified_api
@@ -88,4 +105,15 @@ __all__ = [
     "MicrosoftAgentAdapter",
     "CrewAIAdapter",
     "AutoGenAdapter",
+    "EnhancedAgent",
+    "AgentRequest",
+    "AgentResponse",
+    "AgentMetadata",
+    "MemoryEntry",
+    "PlanStep",
+    "BaseLLMProvider",
+    "OpenAIProvider",
+    "AnthropicProvider",
+    "GeminiProvider",
+    "infer_provider",
 ]

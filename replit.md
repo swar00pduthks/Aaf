@@ -183,6 +183,38 @@ AAF provides built-in adapters for seamless integration with popular agentic fra
 
 **Design Pattern**: Adapter pattern ensures all framework-specific agents conform to AAF's `AbstractAgent` protocol without requiring users to understand protocols or write boilerplate wrapper code.
 
+## Enhanced Type-Safe Agents (NEW!)
+
+**aaf/enhanced_agent.py**: Pydantic AI-like type-safe agents with full validation
+
+**Features**:
+- Generic result types with Pydantic validation
+- Multi-provider LLM support (OpenAI, Anthropic, Gemini, +more)
+- Tool registration with `@agent.tool` decorator
+- Streaming with validation
+- Dependency injection
+- FastAPI-like ergonomics
+
+**Example**:
+```python
+from pydantic import BaseModel
+from aaf import EnhancedAgent
+
+class ResearchOutput(BaseModel):
+    summary: str
+    findings: list[str]
+
+agent = EnhancedAgent(
+    agent_id="researcher",
+    model="openai:gpt-4",
+    result_type=ResearchOutput  # Type-safe!
+)
+
+result = agent.run_sync("Research quantum computing")
+```
+
+**Target Users**: Developers who want Pydantic AI-like type safety with AAF's orchestration
+
 ## Simplified API
 
 **aaf/simplified_api.py**: High-level API facade that completely hides protocol complexity
