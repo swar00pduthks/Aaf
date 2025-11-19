@@ -94,6 +94,30 @@ Both service types follow a common pattern:
 - Automatic context enrichment (timestamp, level, module)
 - Integration with standard Python logging
 
+**Memory Systems**: The framework provides memory abstractions for context retention:
+- `InMemoryShortTermMemory`: Fast working memory with TTL and size limits
+- `SimpleLongTermMemory`: Persistent semantic memory for knowledge retention
+- Support for metadata filtering and relevance scoring
+- Designed for future integration with vector databases (Pinecone, Qdrant, etc.)
+
+**Planning & Reasoning**: Task decomposition and ReAct pattern support:
+- `SimpleTaskPlanner`: Break down complex goals into executable steps
+- `ReActReasoner`: Reason + Act pattern for step-by-step problem solving
+- Plan refinement based on feedback and execution results
+- Extensible for LLM-driven dynamic planning
+
+**Multi-Agent Collaboration**: Four collaboration patterns for coordinating agents:
+- `HierarchicalPattern`: Manager-worker delegation (inspired by LangGraph supervisor)
+- `SequentialPattern`: Pipeline execution (inspired by CrewAI task sequences)
+- `SwarmPattern`: Parallel autonomous execution (inspired by OpenAI Swarm)
+- `RoundRobinPattern`: Iterative refinement through agent rotation
+
+**Human-in-the-Loop**: Production-ready oversight capabilities:
+- `ApprovalWorkflow`: Request human approval for sensitive operations
+- `InterventionPoint`: Define when human input is required
+- `HumanFeedbackLoop`: Continuous human guidance and corrections
+- `GuardrailValidator`: Safety rules and policy enforcement
+
 ## REST API Service
 
 **FastAPI Integration**: The framework is exposed as a REST API service (`api.py`) that runs on port 5000. This allows agents to be created and executed via HTTP requests, making the framework accessible to any client that can make HTTP calls.

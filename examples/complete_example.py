@@ -21,10 +21,36 @@ from aaf import (
     InMemoryStateManager,
     RetryPolicy,
 )
-from aaf.framework import SimpleAgent
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+class SimpleAgent:
+    """Simple agent for demonstration purposes."""
+    
+    def __init__(self, agent_id: str, logger):
+        self._agent_id = agent_id
+        self._logger = logger
+    
+    @property
+    def agent_id(self):
+        return self._agent_id
+    
+    def initialize(self, config):
+        pass
+    
+    def execute(self, input_data):
+        self._logger.info(f"[{self._agent_id}] Executing task")
+        return {
+            "status": "success",
+            "agent_id": self._agent_id,
+            "result": f"Task completed by {self._agent_id}",
+            "input": input_data
+        }
+    
+    def shutdown(self):
+        pass
 
 
 def example_1_basic_agent_with_memory():
