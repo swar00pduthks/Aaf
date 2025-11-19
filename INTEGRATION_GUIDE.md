@@ -77,35 +77,24 @@ AAF Approval Workflow + AAF Guardrails
 - Multi-framework orchestration
 - Retry policies with exponential backoff
 
-**Integration Code**:
+**Integration Code** (Using Built-in Adapter):
 
 ```python
-from aaf import SequentialPattern, InMemoryShortTermMemory
+from aaf import SequentialPattern, LangGraphAdapter  # Built-in!
 from langgraph.prebuilt import create_react_agent
 
 # Create LangGraph agent
 lg_agent = create_react_agent(model, tools)
 
-# Wrap for AAF
-class LangGraphWrapper:
-    def __init__(self, lg_agent):
-        self._agent = lg_agent
-    
-    @property
-    def agent_id(self):
-        return "langgraph_agent"
-    
-    def execute(self, input_data):
-        result = self._agent.invoke(input_data)
-        return {"result": result}
-    
-    def initialize(self, config): pass
-    def shutdown(self): pass
+# Wrap with AAF's built-in adapter (no custom wrapper needed!)
+wrapped = LangGraphAdapter("langgraph_agent", lg_agent)
 
 # Use with AAF orchestration
-wrapped = LangGraphWrapper(lg_agent)
 pipeline = SequentialPattern(agents=[wrapped, other_agents])
+result = pipeline.execute({"messages": [...]})
 ```
+
+**That's it! No wrapper classes to write!**
 
 ### Microsoft Agent Framework Integration
 
@@ -122,41 +111,29 @@ pipeline = SequentialPattern(agents=[wrapped, other_agents])
 - Guardrails and safety validation
 - Deployment patterns
 
-**Integration Code**:
+**Integration Code** (Using Built-in Adapter):
 
 ```python
-from aaf import HierarchicalPattern, ApprovalWorkflow
+from aaf import HierarchicalPattern, MicrosoftAgentAdapter  # Built-in!
 from agent_framework import ChatAgent
 
 # Create Microsoft agents
 ms_manager = ChatAgent(...)
 ms_worker = ChatAgent(...)
 
-# Wrap for AAF
-class MSAgentWrapper:
-    def __init__(self, ms_agent):
-        self._agent = ms_agent
-    
-    @property
-    def agent_id(self):
-        return self._agent.name
-    
-    async def execute(self, input_data):
-        result = await self._agent.run_async(input_data)
-        return {"result": result}
-    
-    def initialize(self, config): pass
-    def shutdown(self): pass
+# Wrap with AAF's built-in adapter (zero boilerplate!)
+wrapped_manager = MicrosoftAgentAdapter("manager", ms_manager)
+wrapped_worker = MicrosoftAgentAdapter("worker", ms_worker)
 
 # Use with AAF hierarchical pattern
-wrapped_manager = MSAgentWrapper(ms_manager)
-wrapped_worker = MSAgentWrapper(ms_worker)
-
 hierarchy = HierarchicalPattern(
     manager_agent=wrapped_manager,
     worker_agents=[wrapped_worker]
 )
+result = hierarchy.execute({"task": "..."})
 ```
+
+**Just one line per agent!**
 
 ### CrewAI Integration
 
@@ -173,16 +150,19 @@ hierarchy = HierarchicalPattern(
 - REST API exposure
 - State persistence
 
-**Integration Code**:
+**Integration Code** (Using Built-in Adapter):
 
 ```python
-from aaf import SimpleTaskPlanner, GuardrailValidator
-from crewai import Agent, Task, Crew
+from aaf import CrewAIAdapter, SimpleTaskPlanner, GuardrailValidator  # Built-in!
+from crewai import Agent
 
-# Create CrewAI crew
+# Create CrewAI agents
 researcher = Agent(role="Researcher", goal="...", backstory="...")
 writer = Agent(role="Writer", goal="...", backstory="...")
-crew = Crew(agents=[researcher, writer], tasks=[...])
+
+# Wrap with AAF adapter (automatic!)
+aaf_researcher = CrewAIAdapter("researcher", researcher)
+aaf_writer = CrewAIAdapter("writer", writer)
 
 # Add AAF features
 planner = SimpleTaskPlanner()
@@ -190,12 +170,40 @@ plan = planner.create_plan("Research and write report", context={})
 
 guardrails = GuardrailValidator(rules=[...])
 if guardrails.validate(action):
-    result = crew.kickoff()
+    result = aaf_researcher.execute({"task": "research AI"})
 ```
+
+**Built-in adapter handles all the protocol complexity!**
+
+## Built-in Framework Adapters (Zero Boilerplate!)
+
+AAF provides ready-to-use adapters for popular frameworks:
+
+```python
+from aaf import (
+    LangGraphAdapter,      # For LangGraph agents
+    MicrosoftAgentAdapter, # For Microsoft Agent Framework
+    CrewAIAdapter,         # For CrewAI agents
+    AutoGenAdapter         # For AutoGen agents
+)
+
+# Example: Wrap any framework agent in one line
+langgraph_agent = LangGraphAdapter("researcher", your_lg_agent)
+microsoft_agent = MicrosoftAgentAdapter("analyst", your_ms_agent)
+crewai_agent = CrewAIAdapter("writer", your_crew_agent)
+
+# All adapters follow the same pattern - no custom wrapper code needed!
+```
+
+**Benefits**:
+- ✅ No custom wrapper classes
+- ✅ Consistent interface across frameworks
+- ✅ Maintained by AAF (automatic updates)
+- ✅ Protocol compliance guaranteed
 
 ## Simplified API (No Protocol Complexity)
 
-For users who don't want to deal with protocols and abstractions, use the simplified API:
+For users who don't want to deal with protocols and abstractions at all, use the simplified API:
 
 ```python
 from aaf.simplified_api import (

@@ -1,64 +1,28 @@
 """
 Example: Using AAF with Microsoft Agent Framework
 
-AAF provides the REST API layer and production features while
-Microsoft Agent Framework handles agent execution.
+AAF provides built-in MicrosoftAgentAdapter - no wrapper code needed!
+
+Microsoft Agent Framework provides:
+- Multi-agent patterns (sequential, concurrent, handoff, group chat)
+- MCP (Model Context Protocol) support
+- A2A (Agent-to-Agent) communication
+
+AAF adds:
+- REST API exposure
+- Centralized memory management
+- Human-in-the-loop workflows
+- Retry policies with exponential backoff
+- State persistence across sessions
 """
 
 from aaf import (
     HierarchicalPattern,
     InMemoryStateManager,
     RetryPolicy,
-    RetryMiddleware
+    MicrosoftAgentAdapter  # Built-in adapter!
 )
 import logging
-
-
-class MicrosoftAgentWrapper:
-    """
-    Wrapper for Microsoft Agent Framework agents.
-    
-    Microsoft Agent Framework provides:
-    - Multi-agent patterns (sequential, concurrent, handoff, group chat)
-    - MCP (Model Context Protocol) support
-    - A2A (Agent-to-Agent) communication
-    
-    AAF adds:
-    - REST API exposure
-    - Centralized memory management
-    - Human-in-the-loop workflows
-    - Retry policies with exponential backoff
-    - State persistence across sessions
-    """
-    
-    def __init__(self, agent_id: str, ms_agent, logger):
-        self._agent_id = agent_id
-        self._ms_agent = ms_agent  # Your Microsoft Agent Framework agent
-        self._logger = logger
-    
-    @property
-    def agent_id(self):
-        return self._agent_id
-    
-    def initialize(self, config):
-        pass
-    
-    def execute(self, input_data):
-        self._logger.info(f"[{self._agent_id}] Executing Microsoft Agent")
-        
-        # In real implementation:
-        # result = await self._ms_agent.run_async(input_data["query"])
-        
-        return {
-            "status": "success",
-            "agent_id": self._agent_id,
-            "result": f"Microsoft Agent {self._agent_id} completed",
-            "framework": "Microsoft Agent Framework",
-            "input": input_data
-        }
-    
-    def shutdown(self):
-        pass
 
 
 def run_microsoft_agent_integration():
@@ -73,11 +37,15 @@ def run_microsoft_agent_integration():
     # Create state manager for persistence
     state_mgr = InMemoryStateManager(logger=logger)
     
-    # Wrap Microsoft agents
-    manager = MicrosoftAgentWrapper("ms_manager", None, logger)
-    worker1 = MicrosoftAgentWrapper("ms_researcher", None, logger)
-    worker2 = MicrosoftAgentWrapper("ms_analyst", None, logger)
-    worker3 = MicrosoftAgentWrapper("ms_writer", None, logger)
+    # Wrap Microsoft agents with AAF's built-in adapter
+    # In real code, replace None with your actual Microsoft agents:
+    # from agent_framework import ChatAgent
+    # ms_agent = ChatAgent(...)
+    
+    manager = MicrosoftAgentAdapter("ms_manager", None, logger)
+    worker1 = MicrosoftAgentAdapter("ms_researcher", None, logger)
+    worker2 = MicrosoftAgentAdapter("ms_analyst", None, logger)
+    worker3 = MicrosoftAgentAdapter("ms_writer", None, logger)
     
     # Use AAF's hierarchical pattern
     hierarchy = HierarchicalPattern(

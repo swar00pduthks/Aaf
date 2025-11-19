@@ -155,6 +155,44 @@ All API endpoints use Pydantic models for request validation and response serial
 - `AgentExecutionResponse`: Returns execution results, metadata, or error information
 - `ServiceConfig`: Configures individual services (MCP tools, A2A clients)
 
+## Framework Adapters
+
+AAF provides built-in adapters for seamless integration with popular agentic frameworks. These adapters eliminate the need for users to write custom wrapper classes.
+
+### Built-in Adapters (aaf/adapters.py)
+
+**LangGraphAdapter**: Wraps LangGraph agents to work with AAF protocols
+- Enables orchestration of LangGraph's stateful workflows
+- Adds AAF's REST API, memory, and HITL features
+- Usage: `LangGraphAdapter("agent_id", langgraph_agent)`
+
+**MicrosoftAgentAdapter**: Wraps Microsoft Agent Framework agents
+- Integrates with Microsoft's multi-agent patterns
+- Adds AAF production infrastructure
+- Usage: `MicrosoftAgentAdapter("agent_id", microsoft_agent)`
+
+**CrewAIAdapter**: Wraps CrewAI role-based agents
+- Combines CrewAI's collaboration with AAF's guardrails
+- Provides memory and planning on top of CrewAI
+- Usage: `CrewAIAdapter("agent_id", crewai_agent)`
+
+**AutoGenAdapter**: Wraps AutoGen conversation agents
+- Orchestrates AutoGen multi-agent conversations
+- Adds state management and REST API
+- Usage: `AutoGenAdapter("agent_id", autogen_agent)`
+
+**Design Pattern**: Adapter pattern ensures all framework-specific agents conform to AAF's `AbstractAgent` protocol without requiring users to understand protocols or write boilerplate wrapper code.
+
+## Simplified API
+
+**aaf/simplified_api.py**: High-level API facade that completely hides protocol complexity
+- `create_agent()`: Simple agent creation
+- `create_memory()`: Memory management without protocols
+- `create_team()`: Multi-agent teams in one line
+- `create_planner()`: Task planning without abstractions
+
+**Target Users**: Developers who want quick prototyping without learning AAF's architecture
+
 ## External Dependencies
 
 ### Protocol Implementations

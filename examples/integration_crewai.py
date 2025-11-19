@@ -1,65 +1,29 @@
 """
 Example: Using AAF with CrewAI
 
-AAF provides REST API and production infrastructure while
-CrewAI handles role-based agent collaboration.
+AAF provides built-in CrewAIAdapter - just plug and play!
+
+CrewAI provides:
+- Role-based agent definition (role, goal, backstory)
+- Crew and Flow orchestration
+- Built-in delegation
+
+AAF adds:
+- Memory systems for context retention
+- Planning abstractions
+- Guardrails and safety validation
+- REST API exposure
+- Approval workflows
 """
 
 from aaf import (
     InMemoryShortTermMemory,
     SimpleTaskPlanner,
     GuardrailValidator,
-    ApprovalWorkflow
+    ApprovalWorkflow,
+    CrewAIAdapter  # Built-in adapter!
 )
 import logging
-
-
-class CrewAIAgentWrapper:
-    """
-    Wrapper for CrewAI agents.
-    
-    CrewAI provides:
-    - Role-based agent definition (role, goal, backstory)
-    - Crew and Flow orchestration
-    - Built-in delegation
-    
-    AAF adds:
-    - Memory systems for context retention
-    - Planning abstractions
-    - Guardrails and safety validation
-    - REST API exposure
-    - Approval workflows
-    """
-    
-    def __init__(self, agent_id: str, crew_agent, logger):
-        self._agent_id = agent_id
-        self._crew_agent = crew_agent  # Your CrewAI agent
-        self._logger = logger
-    
-    @property
-    def agent_id(self):
-        return self._agent_id
-    
-    def initialize(self, config):
-        pass
-    
-    def execute(self, input_data):
-        self._logger.info(f"[{self._agent_id}] Executing CrewAI agent")
-        
-        # In real implementation:
-        # result = self._crew_agent.execute_task(input_data)
-        
-        return {
-            "status": "success",
-            "agent_id": self._agent_id,
-            "result": f"CrewAI agent {self._agent_id} completed task",
-            "framework": "CrewAI",
-            "role": getattr(self._crew_agent, "role", "unknown"),
-            "input": input_data
-        }
-    
-    def shutdown(self):
-        pass
 
 
 def run_crewai_integration():
@@ -133,9 +97,13 @@ def run_crewai_integration():
             print("Content creation blocked by guardrails")
             return
     
-    # Wrap CrewAI agents
-    researcher = CrewAIAgentWrapper("crew_researcher", None, logger)
-    writer = CrewAIAgentWrapper("crew_writer", None, logger)
+    # Wrap CrewAI agents with AAF's built-in adapter
+    # In real code, replace None with your actual CrewAI agents:
+    # from crewai import Agent
+    # crew_agent = Agent(role="Researcher", goal="...", backstory="...")
+    
+    researcher = CrewAIAdapter("crew_researcher", None, logger)
+    writer = CrewAIAdapter("crew_writer", None, logger)
     
     # Execute (simplified)
     print(f"\nExecuting CrewAI agents with AAF orchestration...")

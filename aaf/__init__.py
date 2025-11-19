@@ -37,6 +37,14 @@ from aaf.human_loop import (
     GuardrailValidator,
 )
 
+# Framework adapters for easy integration
+from aaf.adapters import (
+    LangGraphAdapter,
+    MicrosoftAgentAdapter,
+    CrewAIAdapter,
+    AutoGenAdapter,
+)
+
 # Simplified API (optional - hides protocol complexity)
 try:
     from aaf import simplified_api
@@ -76,4 +84,8 @@ __all__ = [
     "InterventionPoint",
     "HumanFeedbackLoop",
     "GuardrailValidator",
+    "LangGraphAdapter",
+    "MicrosoftAgentAdapter",
+    "CrewAIAdapter",
+    "AutoGenAdapter",
 ]

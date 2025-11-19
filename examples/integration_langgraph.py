@@ -1,66 +1,28 @@
 """
 Example: Using AAF to orchestrate LangGraph agents
 
-AAF serves as the middleware/orchestration layer while LangGraph
-handles the stateful workflow logic.
+AAF provides built-in adapters for popular frameworks. No need to write
+wrapper classes - just use LangGraphAdapter!
+
+AAF provides:
+- Memory management
+- Human-in-the-loop workflows  
+- Retry logic
+- State persistence
+
+LangGraph provides:
+- Stateful graph execution
+- Conditional branching
+- Checkpointing
 """
 
 from aaf import (
     SequentialPattern,
     InMemoryShortTermMemory,
-    ApprovalWorkflow
+    ApprovalWorkflow,
+    LangGraphAdapter  # Built-in adapter!
 )
 import logging
-
-# Simulated LangGraph agent wrapper
-class LangGraphAgentWrapper:
-    """Wrapper for LangGraph agents to work with AAF protocols."""
-    
-    def __init__(self, agent_id: str, langgraph_agent, logger):
-        self._agent_id = agent_id
-        self._lg_agent = langgraph_agent  # Your actual LangGraph agent
-        self._logger = logger
-    
-    @property
-    def agent_id(self):
-        return self._agent_id
-    
-    def initialize(self, config):
-        """Initialize the LangGraph agent."""
-        pass
-    
-    def execute(self, input_data):
-        """
-        Execute LangGraph agent and translate response to AAF format.
-        
-        AAF provides:
-        - Memory management
-        - Human-in-the-loop workflows
-        - Retry logic
-        - State persistence
-        
-        LangGraph provides:
-        - Stateful graph execution
-        - Conditional branching
-        - Checkpointing
-        """
-        self._logger.info(f"[{self._agent_id}] Executing LangGraph agent")
-        
-        # In real implementation:
-        # result = self._lg_agent.invoke(input_data)
-        
-        # Simulated response
-        return {
-            "status": "success",
-            "agent_id": self._agent_id,
-            "result": f"LangGraph agent {self._agent_id} processed task",
-            "framework": "LangGraph",
-            "input": input_data
-        }
-    
-    def shutdown(self):
-        """Cleanup LangGraph resources."""
-        pass
 
 
 # Example: Multi-agent workflow with LangGraph agents orchestrated by AAF
@@ -80,10 +42,14 @@ def run_langgraph_integration():
         "metadata": {"type": "requirement"}
     })
     
-    # Wrap LangGraph agents with AAF protocol
-    research_agent = LangGraphAgentWrapper("lg_researcher", None, logger)
-    analysis_agent = LangGraphAgentWrapper("lg_analyst", None, logger)
-    report_agent = LangGraphAgentWrapper("lg_reporter", None, logger)
+    # Wrap LangGraph agents with AAF's built-in adapter
+    # In real code, replace None with your actual LangGraph agents:
+    # from langgraph.prebuilt import create_react_agent
+    # lg_agent = create_react_agent(model, tools)
+    
+    research_agent = LangGraphAdapter("lg_researcher", None, logger)
+    analysis_agent = LangGraphAdapter("lg_analyst", None, logger)
+    report_agent = LangGraphAdapter("lg_reporter", None, logger)
     
     # Use AAF's sequential pattern for orchestration
     pipeline = SequentialPattern(
