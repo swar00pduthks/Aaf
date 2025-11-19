@@ -37,6 +37,10 @@ env/
 .coverage
 htmlcov/
 
-# Replit
-.replit
-replit.nix
+# Temporary files and logs
+/tmp/
+*.log
+
+# Replit (keep these for project configuration)
+# .replit
+# replit.nix
