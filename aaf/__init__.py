@@ -13,6 +13,10 @@ from aaf.abstracts import (
     AbstractState,
 )
 from aaf.framework import AgenticFrameworkX
+from aaf.state import InMemoryStateManager, FileStateManager
+from aaf.retry import RetryPolicy, RetryMiddleware, with_retry
+from aaf.registry import AgentRegistry, AgentInfo
+from aaf.structured_logging import StructuredLogger, LoggingContext
 
 __all__ = [
     "AbstractAgent",
@@ -21,4 +25,13 @@ __all__ = [
     "AbstractService",
     "AbstractState",
     "AgenticFrameworkX",
+    "InMemoryStateManager",
+    "FileStateManager",
+    "RetryPolicy",
+    "RetryMiddleware",
+    "with_retry",
+    "AgentRegistry",
+    "AgentInfo",
+    "StructuredLogger",
+    "LoggingContext",
 ]

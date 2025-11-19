@@ -15,6 +15,9 @@ from pydantic import BaseModel, Field
 from aaf.framework import AgenticFrameworkX
 from aaf.services import MCPToolService, A2AClientService
 from aaf.abstracts import AbstractService
+from aaf.state import InMemoryStateManager
+from aaf.registry import AgentRegistry
+from aaf.retry import RetryPolicy, RetryMiddleware
 
 
 logging.basicConfig(
@@ -23,6 +26,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+state_manager = InMemoryStateManager(logger)
+agent_registry = AgentRegistry(logger)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -30,6 +36,8 @@ async def lifespan(app: FastAPI):
     logger.info("AAF FastAPI Service starting up...")
     yield
     logger.info("AAF FastAPI Service shutting down...")
+    agent_registry.shutdown_all()
+    state_manager.clear_all()
 
 
 app = FastAPI(
@@ -259,6 +267,146 @@ async def demo_scenario_2():
     )
     
     return await execute_agent(request)
+
+
+@app.get("/state/agents", response_model=List[str])
+async def list_agent_states():
+    """
+    List all agents with stored state.
+    
+    Returns:
+        List of agent IDs with stored state
+    """
+    return state_manager.list_agents()
+
+
+@app.post("/state/{agent_id}")
+async def save_agent_state(agent_id: str, state: Dict[str, Any]):
+    """
+    Save agent state.
+    
+    Args:
+        agent_id: Agent identifier
+        state: State data to save
+        
+    Returns:
+        Success status
+    """
+    success = state_manager.save_state(agent_id, state)
+    if success:
+        return {"status": "success", "agent_id": agent_id}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to save state"
+        )
+
+
+@app.get("/state/{agent_id}")
+async def get_agent_state(agent_id: str):
+    """
+    Load agent state.
+    
+    Args:
+        agent_id: Agent identifier
+        
+    Returns:
+        Stored state data
+    """
+    state = state_manager.load_state(agent_id)
+    if state is not None:
+        return {"agent_id": agent_id, "state": state}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No state found for agent '{agent_id}'"
+        )
+
+
+@app.delete("/state/{agent_id}")
+async def delete_agent_state(agent_id: str):
+    """
+    Delete agent state.
+    
+    Args:
+        agent_id: Agent identifier
+        
+    Returns:
+        Success status
+    """
+    success = state_manager.delete_state(agent_id)
+    if success:
+        return {"status": "deleted", "agent_id": agent_id}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"No state found for agent '{agent_id}'"
+        )
+
+
+@app.get("/registry/agents", response_model=List[str])
+async def list_registered_agents():
+    """
+    List all registered agents.
+    
+    Returns:
+        List of registered agent IDs
+    """
+    return agent_registry.list_agents()
+
+
+@app.get("/registry/{agent_id}")
+async def get_agent_info(agent_id: str):
+    """
+    Get information about a registered agent.
+    
+    Args:
+        agent_id: Agent identifier
+        
+    Returns:
+        Agent information
+    """
+    info = agent_registry.get_info(agent_id)
+    if info:
+        return info
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Agent '{agent_id}' not found in registry"
+        )
+
+
+@app.get("/registry")
+async def get_all_agents_info():
+    """
+    Get information about all registered agents.
+    
+    Returns:
+        Dictionary of agent information
+    """
+    return agent_registry.get_all_info()
+
+
+@app.delete("/registry/{agent_id}")
+async def unregister_agent(agent_id: str, shutdown: bool = True):
+    """
+    Unregister an agent from the registry.
+    
+    Args:
+        agent_id: Agent identifier
+        shutdown: Whether to shutdown the agent
+        
+    Returns:
+        Success status
+    """
+    success = agent_registry.unregister(agent_id, shutdown=shutdown)
+    if success:
+        return {"status": "unregistered", "agent_id": agent_id}
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Agent '{agent_id}' not found in registry"
+        )
 
 
 if __name__ == "__main__":
