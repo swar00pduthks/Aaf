@@ -183,3 +183,194 @@ class AbstractAgent(Protocol):
     def shutdown(self) -> None:
         """Clean up resources and shutdown the agent."""
         ...
+
+
+class MemoryEntry(TypedDict, total=False):
+    """
+    Memory entry for storing agent memories.
+    
+    Attributes:
+        id: Unique identifier for the memory entry
+        content: The memory content (text, data, etc.)
+        embedding: Optional vector embedding for semantic search
+        metadata: Additional metadata (timestamp, source, etc.)
+        relevance_score: Score for memory relevance/importance
+    """
+    id: str
+    content: Any
+    embedding: Optional[List[float]]
+    metadata: Dict[str, Any]
+    relevance_score: float
+
+
+class AbstractMemory(Protocol):
+    """
+    Protocol for memory storage and retrieval.
+    
+    Memory systems enable agents to store and recall information across
+    interactions, supporting both short-term (working memory) and long-term
+    (persistent semantic memory) use cases.
+    """
+    
+    @property
+    @abstractmethod
+    def memory_name(self) -> str:
+        """Return the name of this memory system."""
+        ...
+    
+    @abstractmethod
+    def add(self, entry: MemoryEntry) -> bool:
+        """
+        Add a memory entry.
+        
+        Args:
+            entry: Memory entry to store
+            
+        Returns:
+            True if successfully added
+        """
+        ...
+    
+    @abstractmethod
+    def search(
+        self,
+        query: str,
+        limit: int = 10,
+        metadata_filter: Optional[Dict[str, Any]] = None
+    ) -> List[MemoryEntry]:
+        """
+        Search for relevant memories.
+        
+        Args:
+            query: Search query (text or semantic)
+            limit: Maximum number of results
+            metadata_filter: Optional filter for metadata fields
+            
+        Returns:
+            List of relevant memory entries, ordered by relevance
+        """
+        ...
+    
+    @abstractmethod
+    def get(self, memory_id: str) -> Optional[MemoryEntry]:
+        """
+        Get a specific memory by ID.
+        
+        Args:
+            memory_id: Unique identifier for the memory
+            
+        Returns:
+            Memory entry if found, None otherwise
+        """
+        ...
+    
+    @abstractmethod
+    def delete(self, memory_id: str) -> bool:
+        """
+        Delete a memory entry.
+        
+        Args:
+            memory_id: Unique identifier for the memory
+            
+        Returns:
+            True if successfully deleted
+        """
+        ...
+    
+    @abstractmethod
+    def clear(self) -> bool:
+        """
+        Clear all memories.
+        
+        Returns:
+            True if successfully cleared
+        """
+        ...
+
+
+class AbstractPlanner(Protocol):
+    """
+    Protocol for task planning and decomposition.
+    
+    Planners break down complex goals into executable sub-tasks and
+    determine the optimal execution strategy.
+    """
+    
+    @property
+    @abstractmethod
+    def planner_name(self) -> str:
+        """Return the name of this planner."""
+        ...
+    
+    @abstractmethod
+    def create_plan(
+        self,
+        goal: str,
+        context: Dict[str, Any],
+        available_services: List[str]
+    ) -> List[Dict[str, Any]]:
+        """
+        Create an execution plan for a given goal.
+        
+        Args:
+            goal: The high-level objective to achieve
+            context: Contextual information for planning
+            available_services: List of available service names
+            
+        Returns:
+            List of planned steps, each with action and parameters
+        """
+        ...
+    
+    @abstractmethod
+    def refine_plan(
+        self,
+        plan: List[Dict[str, Any]],
+        feedback: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """
+        Refine an existing plan based on feedback.
+        
+        Args:
+            plan: Current execution plan
+            feedback: Feedback from execution or user
+            
+        Returns:
+            Refined execution plan
+        """
+        ...
+
+
+class AbstractReasoner(Protocol):
+    """
+    Protocol for reasoning and decision-making.
+    
+    Reasoners implement patterns like ReAct (Reason + Act) to combine
+    logical reasoning with action execution.
+    """
+    
+    @property
+    @abstractmethod
+    def reasoner_name(self) -> str:
+        """Return the name of this reasoner."""
+        ...
+    
+    @abstractmethod
+    def reason(
+        self,
+        observation: str,
+        history: List[Dict[str, Any]],
+        goal: str
+    ) -> Dict[str, Any]:
+        """
+        Reason about the current state and determine next action.
+        
+        Args:
+            observation: Current observation or feedback
+            history: History of previous reasoning steps
+            goal: The objective to achieve
+            
+        Returns:
+            Reasoning result with thought process and next action
+        """
+        ...
