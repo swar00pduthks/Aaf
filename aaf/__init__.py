@@ -56,6 +56,12 @@ from aaf.decorators import (
     list_agents,
 )
 
+# LLM provider decorators (AAF's own - no Pydantic AI dependency)
+from aaf.llm_decorators import (
+    llm_agent,
+    multi_provider_agent,
+)
+
 # Pydantic AI-powered decorators (optional - requires pydantic-ai)
 try:
     from aaf.pydantic_decorators import (
@@ -161,6 +167,8 @@ __all__ = [
     "plan_task",
     "log_execution",
     "stack",
+    "llm_agent",
+    "multi_provider_agent",
     "pydantic_agent",
     "chatbot",
     "from_pydantic_ai",
