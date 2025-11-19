@@ -45,7 +45,18 @@ from aaf.adapters import (
     AutoGenAdapter,
 )
 
-# Enhanced type-safe agents (Pydantic AI-like features)
+# Zero-boilerplate decorators (AAF's STANDOUT feature!)
+from aaf.decorators import (
+    agent,
+    langgraph_agent,
+    crewai_agent,
+    microsoft_agent,
+    workflow,
+    get_agent,
+    list_agents,
+)
+
+# Enhanced type-safe agents (optional - for Pydantic AI-like features)
 from aaf.enhanced_agent import EnhancedAgent
 from aaf.models import (
     AgentRequest,
@@ -105,6 +116,13 @@ __all__ = [
     "MicrosoftAgentAdapter",
     "CrewAIAdapter",
     "AutoGenAdapter",
+    "agent",
+    "langgraph_agent",
+    "crewai_agent",
+    "microsoft_agent",
+    "workflow",
+    "get_agent",
+    "list_agents",
     "EnhancedAgent",
     "AgentRequest",
     "AgentResponse",
