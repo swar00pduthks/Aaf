@@ -39,6 +39,14 @@ from aaf.ui_themes import (
     generate_theme_css,
     generate_html_embed,
 )
+
+# Databricks integration (Gemini LLM & Genie SQL agent)
+from aaf.databricks_integration import (
+    DatabricksGeminiProvider,
+    DatabricksGenieAgent,
+    create_databricks_gemini_llm,
+    create_databricks_genie_agent,
+)
 from aaf.retry import RetryPolicy, RetryMiddleware, with_retry
 from aaf.registry import AgentRegistry, AgentInfo
 from aaf.structured_logging import StructuredLogger, LoggingContext

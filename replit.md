@@ -206,6 +206,54 @@ html = generate_html_embed(
 # Save to file or serve via endpoint
 ```
 
+## Databricks Integration
+
+AAF integrates with **Databricks Gemini** (LLM) and **Databricks Genie** (SQL agent):
+
+### Databricks Gemini (LLM Provider)
+- **Type**: API (OpenAI-compatible)
+- **Models**: Gemini 2.5 Pro, Gemini 2.5 Flash, Gemini 3 Pro
+- **Use case**: Alternative to OpenAI/Anthropic for LLM calls
+- **Integration**: Custom provider for `@llm` decorator
+
+```python
+from aaf.databricks_integration import DatabricksGeminiProvider
+
+provider = DatabricksGeminiProvider(
+    workspace_url="https://myworkspace.databricks.com",
+    token=os.environ["DATABRICKS_TOKEN"],
+    model="gemini-2.5-flash"
+)
+
+@llm(provider=provider)
+def analyze_data(state):
+    return {"analysis": "..."}
+```
+
+### Databricks Genie (SQL Agent)
+- **Type**: Conversational agent with API
+- **Features**: Natural language → SQL, Chain-of-thought reasoning
+- **Use case**: Text-to-SQL queries against Unity Catalog
+- **Integration**: Wrapped as `@node` or `@autonomous_agent`
+
+```python
+from aaf.databricks_integration import DatabricksGenieAgent
+
+genie = DatabricksGenieAgent(
+    workspace_url="https://myworkspace.databricks.com",
+    space_id="abc123"
+)
+
+result = genie.ask("What are total sales by region?")
+# Returns: {sql, result, summary, conversation_id}
+```
+
+### Benefits
+- ✅ Data stays in Databricks security perimeter
+- ✅ Pay through Databricks contract
+- ✅ Unified governance via Unity Catalog
+- ✅ OpenAI-compatible API for Gemini
+
 ## External Dependencies
 
 *   **MCP (Model Context Protocol)**: External protocol for tool invocation, with `DummyMCPClient` for simulation.
