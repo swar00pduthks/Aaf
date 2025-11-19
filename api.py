@@ -12,9 +12,11 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 
-from aaf.framework import AgenticFrameworkX
+# Old framework imports removed - now using decorator-based approach
+# from aaf.framework import AgenticFrameworkX
 from aaf.services import MCPToolService, A2AClientService
 from aaf.abstracts import AbstractService
+from examples.chat_client_workflow import chat_workflow
 from aaf.state import InMemoryStateManager
 from aaf.registry import AgentRegistry
 from aaf.retry import RetryPolicy, RetryMiddleware
@@ -137,284 +139,84 @@ async def health():
     )
 
 
-@app.post("/agent/execute", response_model=AgentExecutionResponse)
-async def execute_agent(request: AgentExecutionRequest):
+class ChatRequest(BaseModel):
+    """Request for chat workflow."""
+    user_query: str = Field(..., description="User's natural language query")
+
+
+class ChatResponse(BaseModel):
+    """Response from chat workflow."""
+    response: Dict[str, Any]
+    visited_nodes: List[str]
+    final_node: str
+
+
+@app.post("/chat", response_model=ChatResponse)
+async def chat(request: ChatRequest):
     """
-    Execute an agent with the specified configuration and services.
+    Execute the chat workflow with conditional routing.
     
-    Args:
-        request: Agent execution request containing configuration and payload
+    This endpoint demonstrates AAF's decorator-based workflow system with:
+    - Node-based orchestration
+    - Conditional routing (database/tool/research)
+    - State management
+    
+    Example:
+        POST /chat {"user_query": "Show me users"}
+        → Routes to SQL generation
         
-    Returns:
-        Agent execution response with results or error
+        POST /chat {"user_query": "Search for AI news"}
+        → Routes to MCP tool
+        
+        POST /chat {"user_query": "Research quantum computing"}
+        → Routes to autonomous agent
     """
-    logger.info(f"Executing agent: {request.agent_id}")
-    logger.info(f"Framework: {request.framework}, Security: {request.security}")
-    logger.info(f"Services: {[s.service_type + ':' + s.name for s in request.services]}")
+    logger.info(f"Chat request: {request.user_query}")
     
     try:
-        framework = AgenticFrameworkX(logger)
+        # Execute workflow (decorator-based)
+        result = chat_workflow(request.user_query)
         
-        services = create_services(request.services)
-        
-        agent = framework.create_agent(
-            agent_id=request.agent_id,
-            framework=request.framework,
-            services=services,
-            security=request.security,
-            config={"api_request": True}
+        return ChatResponse(
+            response=result.get("response", {}),
+            visited_nodes=result.get("_visited_nodes", []),
+            final_node=result.get("_final_node", "unknown")
         )
         
-        input_data = {
-            "context": request.context,
-            "token_map": request.token_map,
-            "request": request.request
-        }
-        
-        result = agent.execute(input_data)
-        
-        agent.shutdown()
-        
-        return AgentExecutionResponse(
-            agent_id=result.get('agent_id', request.agent_id),
-            status="success",
-            response=result.get('response'),
-            metadata=result.get('metadata', {})
-        )
-        
-    except PermissionError as e:
-        logger.error(f"Permission error executing agent {request.agent_id}: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Permission denied: {str(e)}"
-        )
-    except ValueError as e:
-        logger.error(f"Validation error: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        )
     except Exception as e:
-        logger.error(f"Error executing agent {request.agent_id}: {str(e)}", exc_info=True)
+        logger.error(f"Chat workflow error: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Agent execution failed: {str(e)}"
+            detail=f"Workflow failed: {str(e)}"
         )
 
 
-@app.post("/demo/scenario1", response_model=AgentExecutionResponse)
-async def demo_scenario_1():
-    """
-    Execute Demo Scenario 1: Secure MCP Tool with authentication.
-    
-    This scenario demonstrates successful agent execution with security enabled.
-    """
-    request = AgentExecutionRequest(
-        agent_id="demo_secure_agent",
-        framework="langgraph",
-        services=[
-            ServiceConfig(
-                service_type="mcp_tool",
-                name="search",
-                require_auth=True
-            )
-        ],
-        security=True,
-        context={"user": "api_demo", "session": "demo_session_1"},
-        token_map={
-            "mcp_tool_search": "demo_secure_token_123"
+# OLD ENDPOINT - Using deprecated protocol-based approach
+# Commented out for reference, will be removed in future version
+
+# ============================================================================
+# Demo endpoint
+# ============================================================================
+
+@app.get("/demo")
+async def demo():
+    """Demo endpoint showing AAF capabilities."""
+    return {
+        "message": "AAF - Agentic Application Framework",
+        "approach": "Decorator-based node orchestration",
+        "endpoints": {
+            "/chat": "Chat workflow with conditional routing",
+            "/docs": "Interactive API documentation",
+            "/health": "Health check"
         },
-        request={
-            "params": {
-                "query": "What is the weather today?",
-                "max_results": 5
-            }
+        "example": {
+            "endpoint": "/chat",
+            "method": "POST",
+            "body": {"user_query": "Show me users"}
         }
-    )
-    
-    return await execute_agent(request)
-
-
-@app.post("/demo/scenario2", response_model=AgentExecutionResponse)
-async def demo_scenario_2():
-    """
-    Execute Demo Scenario 2: A2A Delegation without security (should fail).
-    
-    This scenario demonstrates PermissionError when security is disabled
-    and a service requires authentication.
-    """
-    request = AgentExecutionRequest(
-        agent_id="demo_insecure_agent",
-        framework="langgraph",
-        services=[
-            ServiceConfig(
-                service_type="a2a_client",
-                name="assistant_agent",
-                require_auth=True
-            )
-        ],
-        security=False,
-        context={"user": "api_demo", "session": "demo_session_2"},
-        token_map={
-            "a2a_client_assistant_agent": "demo_a2a_token_456"
-        },
-        request={
-            "task": {
-                "action": "summarize",
-                "data": "Summarize this document"
-            }
-        }
-    )
-    
-    return await execute_agent(request)
-
-
-@app.get("/state/agents", response_model=List[str])
-async def list_agent_states():
-    """
-    List all agents with stored state.
-    
-    Returns:
-        List of agent IDs with stored state
-    """
-    return state_manager.list_agents()
-
-
-@app.post("/state/{agent_id}")
-async def save_agent_state(agent_id: str, state: Dict[str, Any]):
-    """
-    Save agent state.
-    
-    Args:
-        agent_id: Agent identifier
-        state: State data to save
-        
-    Returns:
-        Success status
-    """
-    success = state_manager.save_state(agent_id, state)
-    if success:
-        return {"status": "success", "agent_id": agent_id}
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to save state"
-        )
-
-
-@app.get("/state/{agent_id}")
-async def get_agent_state(agent_id: str):
-    """
-    Load agent state.
-    
-    Args:
-        agent_id: Agent identifier
-        
-    Returns:
-        Stored state data
-    """
-    state = state_manager.load_state(agent_id)
-    if state is not None:
-        return {"agent_id": agent_id, "state": state}
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No state found for agent '{agent_id}'"
-        )
-
-
-@app.delete("/state/{agent_id}")
-async def delete_agent_state(agent_id: str):
-    """
-    Delete agent state.
-    
-    Args:
-        agent_id: Agent identifier
-        
-    Returns:
-        Success status
-    """
-    success = state_manager.delete_state(agent_id)
-    if success:
-        return {"status": "deleted", "agent_id": agent_id}
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"No state found for agent '{agent_id}'"
-        )
-
-
-@app.get("/registry/agents", response_model=List[str])
-async def list_registered_agents():
-    """
-    List all registered agents.
-    
-    Returns:
-        List of registered agent IDs
-    """
-    return agent_registry.list_agents()
-
-
-@app.get("/registry/{agent_id}")
-async def get_agent_info(agent_id: str):
-    """
-    Get information about a registered agent.
-    
-    Args:
-        agent_id: Agent identifier
-        
-    Returns:
-        Agent information
-    """
-    info = agent_registry.get_info(agent_id)
-    if info:
-        return info
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agent '{agent_id}' not found in registry"
-        )
-
-
-@app.get("/registry")
-async def get_all_agents_info():
-    """
-    Get information about all registered agents.
-    
-    Returns:
-        Dictionary of agent information
-    """
-    return agent_registry.get_all_info()
-
-
-@app.delete("/registry/{agent_id}")
-async def unregister_agent(agent_id: str, shutdown: bool = True):
-    """
-    Unregister an agent from the registry.
-    
-    Args:
-        agent_id: Agent identifier
-        shutdown: Whether to shutdown the agent
-        
-    Returns:
-        Success status
-    """
-    success = agent_registry.unregister(agent_id, shutdown=shutdown)
-    if success:
-        return {"status": "unregistered", "agent_id": agent_id}
-    else:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Agent '{agent_id}' not found in registry"
-        )
+    }
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "api:app",
-        host="0.0.0.0",
-        port=5000,
-        log_level="info",
-        reload=True
-    )
+    uvicorn.run(app, host="0.0.0.0", port=5000)
