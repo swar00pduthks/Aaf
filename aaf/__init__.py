@@ -47,6 +47,15 @@ from aaf.databricks_integration import (
     create_databricks_gemini_llm,
     create_databricks_genie_agent,
 )
+
+# Event-driven Human-in-the-Loop (Kafka, Redis, etc.)
+from aaf.event_driven_hitl import (
+    MessageBroker,
+    KafkaMessageBroker,
+    RedisMessageBroker,
+    EventDrivenHumanApproval,
+    requires_event_approval,
+)
 from aaf.retry import RetryPolicy, RetryMiddleware, with_retry
 from aaf.registry import AgentRegistry, AgentInfo
 from aaf.structured_logging import StructuredLogger, LoggingContext

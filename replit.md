@@ -254,6 +254,65 @@ result = genie.ask("What are total sales by region?")
 - ✅ Unified governance via Unity Catalog
 - ✅ OpenAI-compatible API for Gemini
 
+## Event-Driven Human-in-the-Loop
+
+AAF supports **event-driven approvals** using message brokers (Kafka, Redis, RabbitMQ) to integrate with enterprise workflow tools:
+
+### Architecture
+```
+AAF Workflow → Kafka → External System (Flowable/Airflow/ServiceNow)
+                         ↓
+                    Human Approves
+                         ↓
+              Kafka ← Response Published
+                ↓
+        AAF Continues/Halts
+```
+
+### Supported Message Brokers
+- **Kafka** - Enterprise streaming platform
+- **Redis Pub/Sub** - Lightweight, fast
+- **RabbitMQ** - Reliable message queue (via custom implementation)
+- **AWS SQS** - Cloud-native queue (via custom implementation)
+
+### Usage
+```python
+from aaf.event_driven_hitl import KafkaMessageBroker, EventDrivenHumanApproval
+
+# Setup broker
+broker = KafkaMessageBroker(['localhost:9092'])
+approval = EventDrivenHumanApproval(
+    broker=broker,
+    request_topic="aaf.approvals.requests",
+    response_topic="aaf.approvals.responses"
+)
+
+# Request approval
+decision = approval.request_approval(
+    task_id="delete_user",
+    task_description="Delete user account and all data",
+    context={"user_id": "123"},
+    timeout=300
+)
+
+if decision["approved"]:
+    # Execute task
+    pass
+```
+
+### Enterprise Integrations
+- **Flowable** - BPMN workflow engine with user tasks
+- **Apache Airflow** - DAG-based orchestration
+- **ServiceNow** - ITIL change management
+- **Custom UI** - Build your own approval dashboard
+
+### Benefits
+- ✅ Decoupled from approval UI
+- ✅ Async processing
+- ✅ Enterprise workflow integration
+- ✅ Distributed systems support
+- ✅ Full audit trail in message broker
+
 ## External Dependencies
 
 *   **MCP (Model Context Protocol)**: External protocol for tool invocation, with `DummyMCPClient` for simulation.
