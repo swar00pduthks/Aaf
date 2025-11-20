@@ -153,21 +153,41 @@ Implement `StateBackend` interface for any database (MongoDB, DynamoDB, etc.)
 
 AAF provides **embeddable UI** with **customizable themes** via **CopilotKit integration**:
 
-### CopilotKit (AG-UI Protocol) - Experimental
-AAF includes experimental support for CopilotKit's AG-UI protocol.
-Note: Real-time event streaming requires workflow callback hooks (planned for future release).
+### CopilotKit Integration (AG-UI Protocol)
 
-AAF workflows can be embedded in React apps using CopilotKit's beautiful UI components:
+AAF includes a **working CopilotKit endpoint** at `/api/copilotkit` that allows embedding AAF workflows in React applications.
+
+**How to Use:**
 
 ```tsx
 import { CopilotKit } from '@copilotkit/react-core';
 import { CopilotSidebar } from '@copilotkit/react-ui';
 
-<CopilotKit runtimeUrl="/api/copilotkit" agent="aaf_agent">
+<CopilotKit runtimeUrl="http://localhost:5000/api/copilotkit" agent="aaf_agent">
   <YourApp />
-  <CopilotSidebar defaultOpen={true} />
+  <CopilotSidebar 
+    defaultOpen={true}
+    labels={{
+      title: "AAF Assistant",
+      initial: "Ask me anything!"
+    }}
+  />
 </CopilotKit>
 ```
+
+**Available UI Components:**
+- `<CopilotSidebar />` - Sidebar chat interface
+- `<CopilotPopup />` - Floating chat widget
+- `<CopilotChat />` - Full-screen chat interface
+
+**Features:**
+- ✅ Server-Sent Events (SSE) streaming
+- ✅ Real-time progress tracking
+- ✅ AG-UI protocol compatible
+- ✅ CORS enabled for React dev servers
+- ✅ Works with any AAF workflow
+
+See `examples/copilotkit_quickstart.md` for complete integration guide.
 
 ### Built-in Themes
 - **Default**: Professional, general purpose

@@ -20,6 +20,9 @@ from examples.chat_client_workflow import chat_workflow
 from aaf.state import InMemoryStateManager
 from aaf.registry import AgentRegistry
 from aaf.retry import RetryPolicy, RetryMiddleware
+from aaf.agui_adapter import AAFAGUIAdapter
+from fastapi.responses import StreamingResponse
+import json
 
 
 logging.basicConfig(
@@ -206,6 +209,7 @@ async def demo():
         "approach": "Decorator-based node orchestration",
         "endpoints": {
             "/chat": "Chat workflow with conditional routing",
+            "/api/copilotkit": "CopilotKit integration endpoint (SSE)",
             "/docs": "Interactive API documentation",
             "/health": "Health check"
         },
@@ -215,6 +219,91 @@ async def demo():
             "body": {"user_query": "Show me users"}
         }
     }
+
+
+# ============================================================================
+# CopilotKit Integration Endpoint
+# ============================================================================
+
+class CopilotKitRequest(BaseModel):
+    """Request model for CopilotKit integration."""
+    message: str = Field(..., description="User's message to the agent")
+    threadId: Optional[str] = Field(None, description="Thread ID for conversation context")
+    agentName: Optional[str] = Field("aaf_agent", description="Name of the agent to use")
+
+
+@app.post("/api/copilotkit")
+async def copilotkit_endpoint(request: CopilotKitRequest):
+    """
+    CopilotKit AG-UI Protocol endpoint.
+    
+    This endpoint allows AAF workflows to be embedded in React applications
+    using CopilotKit's beautiful UI components.
+    
+    Compatible with:
+    - <CopilotChat /> - Full chat interface
+    - <CopilotSidebar /> - Sidebar chat
+    - <CopilotPopup /> - Floating chat widget
+    
+    Usage in React:
+        ```tsx
+        import { CopilotKit } from '@copilotkit/react-core';
+        import { CopilotSidebar } from '@copilotkit/react-ui';
+        
+        <CopilotKit runtimeUrl="/api/copilotkit" agent="aaf_agent">
+          <YourApp />
+          <CopilotSidebar defaultOpen={true} />
+        </CopilotKit>
+        ```
+    
+    Example request:
+        POST /api/copilotkit
+        {
+            "message": "Show me all users",
+            "threadId": "thread-123",
+            "agentName": "aaf_agent"
+        }
+    
+    Response: Server-Sent Events (SSE) stream with AG-UI protocol messages
+    """
+    logger.info(f"[CopilotKit] Received request: {request.message}")
+    
+    # Create AG-UI adapter with the chat workflow
+    adapter = AAFAGUIAdapter(
+        workflow=chat_workflow,
+        agent_name=request.agentName or "aaf_agent"
+    )
+    
+    async def event_stream():
+        """Stream AG-UI events as Server-Sent Events."""
+        try:
+            async for event in adapter.stream_events(request.message):
+                # SSE format: data: {json}\n\n
+                yield f"data: {json.dumps(event)}\n\n"
+            
+            # Send completion event
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+            
+        except Exception as e:
+            logger.error(f"[CopilotKit] Stream error: {e}")
+            error_event = {
+                "type": "error",
+                "message": str(e)
+            }
+            yield f"data: {json.dumps(error_event)}\n\n"
+    
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type"
+        }
+    )
 
 
 if __name__ == "__main__":
