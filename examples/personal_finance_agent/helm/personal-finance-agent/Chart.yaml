@@ -1,0 +1,19 @@
+apiVersion: v2
+name: personal-finance-agent
+description: Personal Finance Assistant powered by AAF Framework with Azure OpenAI
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - aaf
+  - agent
+  - finance
+  - azure-openai
+  - copilotkit
+maintainers:
+  - name: AAF Team
+    email: team@aaf.dev
+home: https://github.com/your-org/personal-finance-agent
+sources:
+  - https://github.com/your-org/personal-finance-agent
+icon: https://example.com/icon.png

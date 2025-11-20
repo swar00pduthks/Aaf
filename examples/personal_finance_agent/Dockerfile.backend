@@ -1,0 +1,49 @@
+# Backend Dockerfile for Azure deployment
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+COPY ../../requirements.txt ./aaf-requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r aaf-requirements.txt
+
+# Install Azure-specific dependencies
+RUN pip install --no-cache-dir \
+    openai==1.12.0 \
+    azure-identity==1.15.0 \
+    azure-monitor-opentelemetry==1.2.0 \
+    psycopg2-binary==2.9.9 \
+    redis==5.0.1
+
+# Copy AAF framework
+COPY ../../aaf ./aaf
+
+# Copy application code
+COPY finance_agent.py .
+COPY finance_api.py .
+
+# Create non-root user
+RUN useradd -m -u 1000 appuser && \
+    chown -R appuser:appuser /app
+USER appuser
+
+# Expose port
+EXPOSE 5001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
+  CMD python -c "import requests; requests.get('http://localhost:5001/health')"
+
+# Run application
+CMD ["uvicorn", "finance_api:app", "--host", "0.0.0.0", "--port", "5001", "--workers", "4"]

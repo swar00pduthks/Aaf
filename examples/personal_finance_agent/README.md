@@ -72,7 +72,42 @@ def personal_finance_agent(user_query: str):
 
 ## Quick Start
 
-### Option 1: Run Demo (No Setup Required)
+### 🎨 Option 1: Full Stack with React UI (Recommended!)
+
+**Step 1:** Install frontend dependencies
+```bash
+cd examples/personal_finance_agent/frontend
+npm install
+```
+
+**Step 2:** Start everything (backend + frontend)
+```bash
+# Terminal 1: Start backend
+cd examples/personal_finance_agent
+python finance_api.py
+
+# Terminal 2: Start frontend
+cd examples/personal_finance_agent/frontend
+npm run dev
+```
+
+**Step 3:** Open browser to `http://localhost:5000`
+
+You'll see:
+- 📊 **Beautiful dashboard** with real-time stats
+- 💬 **AI chat sidebar** powered by CopilotKit
+- 📈 **Spending categories** visualization
+- 🎯 **Quick action buttons**
+
+Ask the AI:
+- "I spent $50 on groceries"
+- "Show me my spending summary"
+- "How can I save more money?"
+- "What should I invest in?"
+
+---
+
+### 🖥️ Option 2: Run Demo (No Setup Required)
 
 ```bash
 python examples/personal_finance_agent/finance_agent.py
@@ -102,7 +137,7 @@ Example 4: Investment Advice (A2A Delegation)
 ...
 ```
 
-### Option 2: Run API Server
+### 🔌 Option 3: API Only (No UI)
 
 ```bash
 python examples/personal_finance_agent/finance_api.py
@@ -122,7 +157,7 @@ curl http://localhost:5001/finance/summary
 curl http://localhost:5001/finance/demo
 ```
 
-### Option 3: Use with CopilotKit
+### 💡 Option 4: Use with Your Own React App
 
 **Install CopilotKit:**
 ```bash

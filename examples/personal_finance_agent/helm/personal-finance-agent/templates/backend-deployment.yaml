@@ -1,0 +1,139 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "personal-finance-agent.fullname" . }}-backend
+  labels:
+    {{- include "personal-finance-agent.labels" . | nindent 4 }}
+    app.kubernetes.io/component: backend
+spec:
+  {{- if not .Values.backend.autoscaling.enabled }}
+  replicas: {{ .Values.backend.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "personal-finance-agent.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: backend
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/backend-configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "personal-finance-agent.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: backend
+    spec:
+      {{- with .Values.backend.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "personal-finance-agent.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: backend
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.backend.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.backend.service.targetPort }}
+          protocol: TCP
+        - name: metrics
+          containerPort: 9090
+          protocol: TCP
+        env:
+        # Azure OpenAI Configuration
+        - name: AZURE_OPENAI_ENDPOINT
+          value: {{ .Values.azureOpenAI.endpoint | quote }}
+        - name: AZURE_OPENAI_API_VERSION
+          value: {{ .Values.azureOpenAI.apiVersion | quote }}
+        - name: AZURE_OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.azureOpenAI.secretName }}
+              key: {{ .Values.azureOpenAI.secretKey }}
+        - name: AZURE_OPENAI_GPT4_DEPLOYMENT
+          value: {{ .Values.azureOpenAI.deployments.gpt4 | quote }}
+        - name: AZURE_OPENAI_GPT35_DEPLOYMENT
+          value: {{ .Values.azureOpenAI.deployments.gpt35turbo | quote }}
+        
+        # Database Configuration
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: url
+        - name: PGHOST
+          value: {{ .Values.database.host | quote }}
+        - name: PGPORT
+          value: {{ .Values.database.port | quote }}
+        - name: PGDATABASE
+          value: {{ .Values.database.name | quote }}
+        - name: PGUSER
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: {{ .Values.database.usernameKey }}
+        - name: PGPASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.database.secretName }}
+              key: {{ .Values.database.passwordKey }}
+        - name: PGSSLMODE
+          value: {{ .Values.database.sslMode | quote }}
+        
+        # Redis Configuration
+        {{- if .Values.redis.enabled }}
+        - name: REDIS_HOST
+          value: {{ .Values.redis.azure.host | quote }}
+        - name: REDIS_PORT
+          value: {{ .Values.redis.azure.port | quote }}
+        - name: REDIS_SSL
+          value: {{ .Values.redis.azure.ssl | quote }}
+        - name: REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: {{ .Values.redis.secretName }}
+              key: {{ .Values.redis.passwordKey }}
+        {{- end }}
+        
+        # Application Configuration
+        {{- range .Values.backend.env }}
+        - name: {{ .name }}
+          value: {{ .value | quote }}
+        {{- end }}
+        
+        # Monitoring
+        {{- if .Values.monitoring.enabled }}
+        - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+          value: "InstrumentationKey={{ .Values.monitoring.azureMonitor.instrumentationKey }}"
+        {{- end }}
+        
+        livenessProbe:
+          {{- toYaml .Values.backend.livenessProbe | nindent 12 }}
+        readinessProbe:
+          {{- toYaml .Values.backend.readinessProbe | nindent 12 }}
+        resources:
+          {{- toYaml .Values.backend.resources | nindent 12 }}
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/.cache
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

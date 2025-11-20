@@ -1,0 +1,312 @@
+# Default values for personal-finance-agent
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# ============================================================================
+# Global Configuration
+# ============================================================================
+global:
+  environment: production
+  azure:
+    region: eastus
+    resourceGroup: finance-agent-rg
+    subscriptionId: ""  # Set via --set or CI/CD
+
+# ============================================================================
+# Backend (FastAPI + AAF)
+# ============================================================================
+backend:
+  name: finance-backend
+  replicaCount: 3
+  
+  image:
+    repository: yourregistry.azurecr.io/finance-backend
+    pullPolicy: IfNotPresent
+    tag: "1.0.0"
+  
+  imagePullSecrets:
+    - name: acr-secret
+  
+  service:
+    type: ClusterIP
+    port: 5001
+    targetPort: 5001
+    annotations:
+      service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 5001
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: 5001
+    initialDelaySeconds: 10
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+  
+  env:
+    - name: ENVIRONMENT
+      value: "production"
+    - name: LOG_LEVEL
+      value: "INFO"
+    - name: WORKERS
+      value: "4"
+
+# ============================================================================
+# Frontend (React + Vite)
+# ============================================================================
+frontend:
+  name: finance-frontend
+  replicaCount: 2
+  
+  image:
+    repository: yourregistry.azurecr.io/finance-frontend
+    pullPolicy: IfNotPresent
+    tag: "1.0.0"
+  
+  imagePullSecrets:
+    - name: acr-secret
+  
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 80
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 75
+
+# ============================================================================
+# Azure OpenAI Configuration
+# ============================================================================
+azureOpenAI:
+  # Azure OpenAI Service endpoint
+  endpoint: "https://YOUR-RESOURCE-NAME.openai.azure.com/"
+  
+  # API version
+  apiVersion: "2024-02-15-preview"
+  
+  # Deployment names (created in Azure OpenAI Studio)
+  deployments:
+    gpt4: "gpt-4-deployment"          # Your GPT-4 deployment name
+    gpt35turbo: "gpt-35-turbo-deployment"  # Your GPT-3.5 Turbo deployment name
+  
+  # Secret name containing API key (created separately)
+  secretName: azure-openai-secret
+  secretKey: AZURE_OPENAI_API_KEY
+
+# ============================================================================
+# Database (Azure Database for PostgreSQL)
+# ============================================================================
+database:
+  # Use Azure Database for PostgreSQL
+  type: azure-postgres
+  
+  # Connection details
+  host: "finance-db.postgres.database.azure.com"
+  port: 5432
+  name: "finance_db"
+  sslMode: "require"
+  
+  # Secret containing credentials
+  secretName: postgres-secret
+  usernameKey: username
+  passwordKey: password
+  
+  # Connection pool settings
+  poolSize: 20
+  maxOverflow: 10
+  poolTimeout: 30
+
+# ============================================================================
+# Ingress (Azure Application Gateway or NGINX)
+# ============================================================================
+ingress:
+  enabled: true
+  className: "nginx"  # Or "azure-application-gateway"
+  
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    # Azure Application Gateway specific (uncomment if using)
+    # kubernetes.io/ingress.class: azure/application-gateway
+    # appgw.ingress.kubernetes.io/ssl-redirect: "true"
+  
+  hosts:
+    - host: finance.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend: frontend
+        - path: /api
+          pathType: Prefix
+          backend: backend
+  
+  tls:
+    - secretName: finance-tls-cert
+      hosts:
+        - finance.yourdomain.com
+
+# ============================================================================
+# Service Accounts & RBAC
+# ============================================================================
+serviceAccount:
+  create: true
+  annotations:
+    azure.workload.identity/client-id: ""  # For Azure Workload Identity
+  name: "finance-agent-sa"
+
+# ============================================================================
+# Secrets (External Secrets Operator recommended for production)
+# ============================================================================
+secrets:
+  # Use Azure Key Vault with External Secrets Operator
+  useExternalSecrets: true
+  
+  externalSecrets:
+    # Azure Key Vault configuration
+    vaultName: "finance-keyvault"
+    tenantId: ""  # Your Azure tenant ID
+    
+    secrets:
+      - name: azure-openai-secret
+        keys:
+          - AZURE_OPENAI_API_KEY
+      
+      - name: postgres-secret
+        keys:
+          - username
+          - password
+      
+      - name: session-secret
+        keys:
+          - SESSION_SECRET
+
+# ============================================================================
+# Monitoring & Observability
+# ============================================================================
+monitoring:
+  # Azure Monitor integration
+  enabled: true
+  
+  azureMonitor:
+    workspaceId: ""  # Azure Monitor Log Analytics workspace ID
+    instrumentationKey: ""  # Application Insights key
+  
+  # Prometheus metrics
+  prometheus:
+    enabled: true
+    port: 9090
+    path: /metrics
+  
+  # Logging
+  logging:
+    level: INFO
+    format: json
+    azureLogAnalytics: true
+
+# ============================================================================
+# Redis Cache (Azure Cache for Redis)
+# ============================================================================
+redis:
+  enabled: true
+  
+  azure:
+    # Use Azure Cache for Redis
+    host: "finance-cache.redis.cache.windows.net"
+    port: 6380
+    ssl: true
+    
+    # Secret containing Redis password
+    secretName: redis-secret
+    passwordKey: password
+
+# ============================================================================
+# Pod Security & Network Policies
+# ============================================================================
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+networkPolicy:
+  enabled: true
+  policyTypes:
+    - Ingress
+    - Egress
+
+# ============================================================================
+# Node Affinity & Tolerations
+# ============================================================================
+nodeSelector:
+  kubernetes.io/os: linux
+  agentpool: agentpool  # Azure AKS node pool
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app
+                operator: In
+                values:
+                  - finance-backend
+          topologyKey: kubernetes.io/hostname
+
+tolerations: []
+
+# ============================================================================
+# Backup & Disaster Recovery
+# ============================================================================
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # 2 AM daily
+  retention: 30  # days
+  azureStorageAccount: "financebackups"
+  containerName: "database-backups"
