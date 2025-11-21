@@ -110,7 +110,7 @@ async def chat(request: ChatRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/api/copilotkit")
+@app.post("/copilotkit")
 async def copilotkit_endpoint(request: CopilotKitRequest):
     """
     CopilotKit integration endpoint.
@@ -211,4 +211,4 @@ async def demo():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=5001)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -1,4 +1,4 @@
-modules = ["python-3.12"]
+modules = ["python-3.12", "nodejs-20"]
 [agent]
 expertMode = true
 integrations = ["github:1.0.0"]
@@ -13,10 +13,14 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Run AAF Demo"
+args = "Finance App"
+
+[[workflows.workflow.tasks]]
+task = "workflow.run"
+args = "Finance Assistant"
 
 [[workflows.workflow]]
-name = "Run AAF Demo"
+name = "Finance App"
 author = "agent"
 
 [workflows.workflow.metadata]
@@ -24,8 +28,20 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python api.py"
+args = "cd examples/personal_finance_agent && python finance_api.py & cd examples/personal_finance_agent/frontend && npm run dev"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Finance Assistant"
+author = "agent"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "bash /home/runner/workspace/examples/personal_finance_agent/run-app.sh"
+waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [nix]
 channel = "stable-25_05"
@@ -36,9 +52,5 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 33511
+localPort = 46543
 externalPort = 3000
-
-[[ports]]
-localPort = 40879
-externalPort = 3001
