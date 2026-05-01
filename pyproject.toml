@@ -9,3 +9,6 @@ dependencies = [
     "pydantic>=2.12.4",
     "uvicorn[standard]>=0.38.0",
 ]
+
+[project.scripts]
+aaf = "aaf.cli.main:main"
