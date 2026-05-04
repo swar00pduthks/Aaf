@@ -164,13 +164,14 @@ class PostgresStateBackend(StateBackend):
     - Complex queries on state
     
     Example:
+        import os
         import psycopg2
         
         conn = psycopg2.connect(
             host="localhost",
             database="aaf_db",
-            user="user",
-            password="password"
+            user=os.environ.get("DB_USER", "postgres"),
+            password=os.environ.get("DB_PASSWORD", "your_password")
         )
         
         backend = PostgresStateBackend(conn)

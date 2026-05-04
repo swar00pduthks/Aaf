@@ -108,8 +108,8 @@ def example_postgres_backend():
             conn = psycopg2.connect(
                 host='localhost',
                 database='aaf_db',
-                user='postgres',
-                password='password'
+                user=os.environ.get('DB_USER', 'postgres'),
+                password=os.environ.get('DB_PASSWORD', 'your_password')
             )
             print("✓ Connected to local PostgreSQL database")
         
